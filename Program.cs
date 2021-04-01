@@ -26,10 +26,14 @@ namespace ProjectSweater
                 .ConfigureServices((hostCtx, services) =>
                 {
                     var cfg = hostCtx.Configuration;
+                    //use built-in options pattern for configuration DI. this allows run-time updates of config values.
                     services.Configure<ServiceConfig>(cfg.GetSection("ServiceConfig"));
                     services.Configure<List<Recommendation>>(cfg.GetSection("Recommendations"));
+                    //use typed httpclient for efficient disposal
                     services.AddHttpClient<OpenWeatherMapApiService>()
+                        //use polly to handle some basic retries for internet hiccups
                         .AddTransientHttpErrorPolicy(p => p.WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(500)));
+                    //Hosted service that takes user input is a bit odd but allows use of DI
                     services.AddHostedService<ApplicationService>();
                 });
     }
